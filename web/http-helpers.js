@@ -28,12 +28,13 @@ exports.handlePostRequest = function(req, res) {
     body = Buffer.concat(body).toString();
     body = qs.parse(body);
     var url = body.url;
-    exports.checkArchives(req, res);
+    exports.checkArchives(req, res, url);
   });
 };
 
-exports.checkArchives = function(req, res) {
-  archive.isUrlArchived(req.url, function(exists) {
+exports.checkArchives = function(req, res, url) {
+  url = url || req.url;
+  archive.isUrlArchived(url, function(exists) {
     if (exists) {
       exports.serveFile(req, res);
     } else {
@@ -41,9 +42,10 @@ exports.checkArchives = function(req, res) {
         res.writeHead(404, headers);
         res.end('error, file not found');
       } else {
-        res.writeHead(200, headers);
+        console.log('POST URL: ', url);
+        archive.addUrlToList(url);
+        console.log('MADE it');
         fs.createReadStream(archive.paths.siteAssets + '/loading.html').pipe(res);
-        fs.appendFileSync(archive.paths.list, url);
         // Do worker stuff
       }
     }
